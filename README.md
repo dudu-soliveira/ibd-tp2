@@ -15,3 +15,8 @@ Get data for COVID-19 vaccinations.
 ## concat.py
 
 Generate 2 files with all of the data previously scraped.
+
+## create_db.sql
+
+Create initial database tables and import data from csv files.
+ADD PATHS BEFORE RUNNING SCRIPT!

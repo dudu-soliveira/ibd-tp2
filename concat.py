@@ -49,7 +49,7 @@ def concat_data(
     input_glob = input_path.glob("*.csv")
 
     with open(output_path, "w") as fp:
-        writer = csv.writer(fp)
+        writer = csv.writer(fp, lineterminator="\n")
         writer.writerow(columns)
 
     for file in input_glob:
