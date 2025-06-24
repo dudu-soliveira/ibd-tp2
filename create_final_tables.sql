@@ -2,6 +2,8 @@
 -- Criação do novo esquema de tabelas normalizado
 -- =================================================================
 
+BEGIN;
+
 -- Tabela para armazenar as Unidades da Federação
 CREATE TABLE uf (
     codigo_uf CHAR(2) PRIMARY KEY,
@@ -11,6 +13,12 @@ CREATE TABLE uf (
 -- Tabela para armazenar as Regiões Intermediárias
 CREATE TABLE regiao_intermediaria (
     codigo_regiao_intermediaria CHAR(4) PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL
+);
+
+-- Tabela para armazenar as Regiões Imediatas
+CREATE TABLE regiao_imediata (
+    codigo_regiao_imediata CHAR(6) PRIMARY KEY,
     nome VARCHAR(255) NOT NULL
 );
 
@@ -76,19 +84,44 @@ INSERT INTO regiao_intermediaria (codigo_regiao_intermediaria, nome)
 SELECT DISTINCT CAST(codigo_regiao_geografica_intermediaria AS CHAR(4)), nome_regiao_geografica_intermediaria
 FROM municipio_pretrat;
 
+-- Inserindo dados na tabela regiao_imediata
+INSERT INTO regiao_imediata (codigo_regiao_imediata, nome)
+SELECT DISTINCT CAST(codigo_regiao_geografica_imediata AS CHAR(6)), nome_regiao_geografica_imediata
+FROM municipio_pretrat;
+
 -- Tabela temporária para otimizar a junção entre municipio e óbito
+-- Foi criado uma CTE para corrigir os dados de óbitos antes de realizar a junção
 CREATE TEMPORARY TABLE temp_mp_op AS
+WITH obitos_corrigidos AS (
+    SELECT
+        op2.uf,
+        op2.municipio,
+        '53-2020' AS semana_epidemiologica,
+        op2.populacao,
+        op1.casos_novos_semana + op2.casos_novos_semana AS casos_novos_semana,
+        op2.casos_acumulados,
+        op2.incidencia_100mil_hab,
+        op1.obitos_novos_semana + op2.obitos_novos_semana AS obitos_novos_semana,
+        op2.obitos_acumulados,
+        op2.taxa_mortalidade_100mil_hab
+    FROM obito_pretrat op1 JOIN obito_pretrat op2 ON (op1.uf = op2.uf AND op1.municipio = op2.municipio)
+    WHERE op1.semana_epidemiologica = '53-2020' AND op2.semana_epidemiologica = '53-2021'
+    UNION
+    SELECT *
+    FROM obito_pretrat
+    WHERE semana_epidemiologica <> '53-2020' AND semana_epidemiologica <> '53-2021'
+)
 SELECT
     SUBSTRING(CAST(mp.codigo_municipio_completo AS TEXT), 1, 6) as codigo_municipio,
     mp.municipio as nome,
     CAST(mp.codigo_uf AS CHAR(2)) AS codigo_uf,
     CAST(mp.codigo_regiao_geografica_intermediaria AS CHAR(4)) AS codigo_regiao_intermediaria,
     SUBSTRING(CAST(mp.codigo_regiao_geografica_imediata AS TEXT), 1, 6) AS codigo_regiao_imediata,
-    op.populacao,
-    op.semana_epidemiologica,
-    op.obitos_novos_semana,
-    op.casos_novos_semana
-FROM municipio_pretrat mp JOIN obito_pretrat op ON (mp.municipio = op.municipio AND mp.uf = op.uf);
+    oc.populacao,
+    oc.semana_epidemiologica,
+    oc.obitos_novos_semana,
+    oc.casos_novos_semana
+FROM municipio_pretrat mp JOIN obitos_corrigidos oc ON (mp.municipio = oc.municipio AND mp.uf = oc.uf);
 
 -- Inserindo dados na tabela municipio
 INSERT INTO municipio (codigo_municipio, nome, codigo_uf, codigo_regiao_intermediaria, codigo_regiao_imediata, populacao)
@@ -133,7 +166,7 @@ DROP TABLE temp_mp_op;
 ALTER TABLE municipio
     ADD CONSTRAINT fk_municipio_uf FOREIGN KEY (codigo_uf) REFERENCES uf(codigo_uf),
     ADD CONSTRAINT fk_municipio_intermediaria FOREIGN KEY (codigo_regiao_intermediaria) REFERENCES regiao_intermediaria(codigo_regiao_intermediaria),
-    ADD CONSTRAINT fk_municipio_imediata FOREIGN KEY (codigo_regiao_imediata) REFERENCES municipio(codigo_municipio);
+    ADD CONSTRAINT fk_municipio_imediata FOREIGN KEY (codigo_regiao_imediata) REFERENCES regiao_imediata(codigo_regiao_imediata);
 
 -- Adiciona as restrições para a tabela 'obito'
 ALTER TABLE obito
@@ -148,3 +181,13 @@ ALTER TABLE caso
 -- Adiciona a restrição para a tabela 'vacina'
 ALTER TABLE vacina
     ADD CONSTRAINT fk_vacina_municipio FOREIGN KEY (cod_ibge) REFERENCES municipio(codigo_municipio);
+
+-- =================================================================
+-- Removendo Tabelas de Pré-tratamento que não são mais necessárias
+-- =================================================================
+
+DROP TABLE municipio_pretrat;
+DROP TABLE obito_pretrat;
+DROP TABLE vacina_pretrat;
+
+COMMIT;

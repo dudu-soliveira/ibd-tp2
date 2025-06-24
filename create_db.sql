@@ -2,6 +2,8 @@
 -- Criação das Tabelas de Pré-tratamento
 -- =================================================================
 
+BEGIN;
+
 SET DATESTYLE TO 'European';
 
 -- Cria a tabela para armazenar os dados brutos dos municípios.
@@ -66,3 +68,5 @@ CREATE TABLE semana (
 \copy obito_pretrat(uf, municipio, populacao, casos_novos_semana, casos_acumulados, incidencia_100mil_hab, obitos_novos_semana, obitos_acumulados, taxa_mortalidade_100mil_hab, semana_epidemiologica) FROM '' DELIMITER ',' CSV HEADER;
 \copy semana(semana_ano, inicio, termino) FROM '' DELIMITER ',' CSV HEADER;
 \copy municipio_pretrat(codigo_uf, uf, codigo_regiao_geografica_intermediaria, nome_regiao_geografica_intermediaria, codigo_regiao_geografica_imediata, nome_regiao_geografica_imediata, codigo_municipio_incompleto, codigo_municipio_completo, municipio) FROM '' DELIMITER ',' CSV HEADER;
+
+COMMIT;
