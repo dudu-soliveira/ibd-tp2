@@ -1,4 +1,10 @@
 # 🧪 Efeitos Epidemiológicos da Cobertura Vacinal no Brasil (TP2 - IBD)
+## 🏷️ Status e Tecnologias
+
+![Feito em SQL](https://img.shields.io/badge/SQL-Feito%20em-blueviolet)
+![Feito em Python](https://img.shields.io/badge/Python-Feito%20em-yellow)
+![Badge Concluído](https://img.shields.io/badge/Status-Conclu%C3%ADdo-brightgreen)
+
 
 > Projeto prático desenvolvido para a disciplina de **Introdução a Banco de Dados (DCC/UFMG)** com o objetivo de analisar o impacto da vacinação contra a COVID-19 na taxa de óbitos e infecções no Brasil, utilizando dados do **DataSUS**, **Ministério da Saúde** e **IBGE**.
 
